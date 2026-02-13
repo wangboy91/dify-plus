@@ -1,0 +1,30 @@
+version: 0.0.1
+type: plugin
+author: wangboy
+name: doubao-ark-image
+label:
+  en_US: Doubao Ark Image
+  zh_Hans: 豆包方舟文生图
+description:
+  en_US: Generate images with Doubao Ark (Seedream) text-to-image API.
+  zh_Hans: 使用豆包方舟文生图接口生成图片。
+icon: icon.svg
+created_at: 2026-02-03T00:00:00Z
+resource:
+  memory: 1048576
+  permission:
+    tool:
+      enabled: true
+plugins:
+  tools:
+    - provider/doubao_ark.yaml
+meta:
+  version: 0.0.1
+  arch:
+    - amd64
+    - arm64
+  runner:
+    language: python
+    version: "3.12"
+    entrypoint: main
+privacy: ./PRIVACY.md

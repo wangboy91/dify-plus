@@ -1,0 +1,30 @@
+version: 0.0.2
+type: plugin
+author: wangboy
+name: doubao-ark-video
+label:
+  en_US: Doubao Ark Video
+  zh_Hans: 豆包方舟视频生成
+description:
+  en_US: Generate videos with Doubao Ark (Seedance) API.
+  zh_Hans: 使用豆包方舟视频生成接口生成视频。
+icon: icon.svg
+created_at: 2026-02-13T00:00:00Z
+resource:
+  memory: 1048576
+  permission:
+    tool:
+      enabled: true
+plugins:
+  tools:
+    - provider/doubao_ark.yaml
+meta:
+  version: 0.0.2
+  arch:
+    - amd64
+    - arm64
+  runner:
+    language: python
+    version: "3.12"
+    entrypoint: main
+privacy: ./PRIVACY.md

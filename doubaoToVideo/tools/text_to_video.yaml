@@ -1,0 +1,111 @@
+identity:
+  author: wangboy
+  name: text_to_video
+  label:
+    en_US: Text to Video
+    zh_Hans: 豆包文生视频
+  icon: icon.svg
+description:
+  human:
+    en_US: Generate video from text via Doubao Ark.
+    zh_Hans: 通过豆包方舟根据提示词生成视频。
+  llm: Generate video from a text prompt using Doubao Ark.
+parameters:
+  - name: prompt
+    type: string
+    required: true
+    form: llm
+    label:
+      en_US: Prompt
+      zh_Hans: 视频提示词
+    human_description:
+      en_US: Describe the video you want to generate.
+      zh_Hans: 描述你希望生成的视频内容。
+  - name: generate_audio
+    type: boolean
+    required: false
+    form: form
+    default: true
+    label:
+      en_US: Generate Audio
+      zh_Hans: 生成音频
+    human_description:
+      en_US: Whether to generate audio for the video.
+      zh_Hans: 是否为视频生成音频。
+  - name: ratio
+    type: select
+    required: false
+    form: form
+    default: adaptive
+    options:
+      - value: adaptive
+        label:
+          en_US: Adaptive
+          zh_Hans: 自适应
+      - value: "16:9"
+        label:
+          en_US: "16:9"
+          zh_Hans: "16:9"
+      - value: "9:16"
+        label:
+          en_US: "9:16"
+          zh_Hans: "9:16"
+    label:
+      en_US: Aspect Ratio
+      zh_Hans: 宽高比
+    human_description:
+      en_US: Video aspect ratio.
+      zh_Hans: 视频宽高比。
+  - name: duration
+    type: number
+    required: false
+    form: form
+    default: 5
+    min: 1
+    max: 10
+    label:
+      en_US: Duration (seconds)
+      zh_Hans: 时长（秒）
+    human_description:
+      en_US: Video duration in seconds.
+      zh_Hans: 视频时长（秒）。
+  - name: watermark
+    type: boolean
+    required: false
+    form: form
+    default: false
+    label:
+      en_US: Watermark
+      zh_Hans: 水印
+    human_description:
+      en_US: Add watermark to generated video.
+      zh_Hans: 是否添加水印。
+  - name: poll_interval
+    type: number
+    required: false
+    form: form
+    default: 5
+    min: 1
+    max: 30
+    label:
+      en_US: Polling Interval (seconds)
+      zh_Hans: 轮询间隔（秒）
+    human_description:
+      en_US: Interval for polling task status.
+      zh_Hans: 轮询任务状态的间隔时间（秒）。
+  - name: max_polls
+    type: number
+    required: false
+    form: form
+    default: 120
+    min: 10
+    max: 600
+    label:
+      en_US: Max Polls
+      zh_Hans: 最大轮询次数
+    human_description:
+      en_US: Maximum number of polling attempts.
+      zh_Hans: 最大轮询次数。
+extra:
+  python:
+    source: tools/text_to_video.py
