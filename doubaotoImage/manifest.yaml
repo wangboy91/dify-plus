@@ -1,4 +1,4 @@
-version: 0.0.1
+version: 0.0.2
 type: plugin
 author: wangboy
 name: doubao-ark-image
@@ -19,7 +19,7 @@ plugins:
   tools:
     - provider/doubao_ark.yaml
 meta:
-  version: 0.0.1
+  version: 0.0.2
   arch:
     - amd64
     - arm64

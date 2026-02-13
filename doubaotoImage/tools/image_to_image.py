@@ -1,7 +1,6 @@
 import base64
 import json
 import os
-import time
 from typing import Generator, Optional
 from urllib.parse import urlparse
 
@@ -10,50 +9,37 @@ from dify_plugin import Tool
 from dify_plugin.entities.tool import ToolInvokeMessage
 
 
-class ImageToVideoTool(Tool):
+class ImageToImageTool(Tool):
     def _invoke(self, tool_parameters: dict) -> Generator[ToolInvokeMessage, None, None]:
         credentials = self.runtime.credentials or {}
         api_key = credentials.get("ark_api_key")
         base_url = credentials.get("base_url") or "https://ark.cn-beijing.volces.com"
-        model = credentials.get("model") or "doubao-seedance-1-5-pro-251215"
+        model = credentials.get("model") or "ep-20260125201054-pfrb4"
 
         prompt = tool_parameters.get("prompt")
         if not prompt:
             yield self.create_text_message("prompt is required")
             return
 
-        image_url = yield from self._resolve_reference_image_url(tool_parameters)
-        if not image_url:
+        image_input = yield from self._resolve_image_from_parameters(tool_parameters)
+        if not image_input:
             yield self.create_text_message(
-                "reference_image is required or local file content could not be resolved"
+                "image is required or local file content could not be resolved"
             )
             return
 
-        generate_audio = tool_parameters.get("generate_audio", True)
-        ratio = tool_parameters.get("ratio", "adaptive")
-        duration = tool_parameters.get("duration", 5)
-        watermark = tool_parameters.get("watermark", False)
-        poll_interval = tool_parameters.get("poll_interval", 5)
-        max_polls = tool_parameters.get("max_polls", 120)
+        size = tool_parameters.get("size") or "4K"
+        response_format = tool_parameters.get("response_format") or "url"
+        watermark = tool_parameters.get("watermark")
+        if watermark is None:
+            watermark = True
 
         payload = {
             "model": model,
-            "content": [
-                {
-                    "type": "text",
-                    "text": prompt,
-                },
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": image_url,
-                    },
-                    "role": "reference_image",
-                },
-            ],
-            "generate_audio": generate_audio,
-            "ratio": ratio,
-            "duration": duration,
+            "prompt": prompt,
+            "image": image_input,
+            "response_format": response_format,
+            "size": size,
             "watermark": watermark,
         }
 
@@ -62,126 +48,40 @@ class ImageToVideoTool(Tool):
             "Authorization": f"Bearer {api_key}",
         }
 
-        url = f"{base_url.rstrip('/')}/api/v3/contents/generations/tasks"
+        url = f"{base_url.rstrip('/')}/api/v3/images/generations"
+        response = requests.post(url, headers=headers, json=payload, timeout=120)
+        response.raise_for_status()
+        data = response.json()
 
-        try:
-            response = requests.post(url, headers=headers, json=payload, timeout=30)
-            response.raise_for_status()
-            data = response.json()
+        images = data.get("data") or []
+        for image in images:
+            image_url = image.get("url")
+            if image_url:
+                yield self.create_image_message(image_url)
 
-            task_id = data.get("id")
-            if not task_id:
-                yield self.create_text_message("Failed to create video generation task")
-                return
+        yield self.create_json_message(
+            {
+                "model": data.get("model"),
+                "created": data.get("created"),
+                "data": images,
+                "usage": data.get("usage"),
+            }
+        )
 
-            yield self.create_text_message(f"Task created successfully, task ID: {task_id}")
-
-            poll_count = 0
-            status = "queued"
-            while poll_count < max_polls:
-                poll_count += 1
-                task_url = f"{url}/{task_id}"
-
-                try:
-                    task_response = requests.get(task_url, headers=headers, timeout=10)
-                    task_response.raise_for_status()
-                    task_data = task_response.json()
-
-                    status = task_data.get("status")
-                    yield self.create_text_message(f"Poll {poll_count}/{max_polls}: Task status is {status}")
-
-                    if status == "succeeded":
-                        video_url = task_data.get("content", {}).get("video_url")
-                        if video_url:
-                            yield self.create_text_message("Video generation completed!")
-                            yield self.create_text_message(f"Download URL: {video_url}")
-
-                            try:
-                                video_resp = requests.get(video_url, timeout=30)
-                                if video_resp.status_code == 200:
-                                    yield self.create_file_message(
-                                        file=video_resp.content,
-                                        filename="generated_video.mp4",
-                                        mime_type="video/mp4",
-                                    )
-                            except Exception as error:
-                                yield self.create_text_message(
-                                    f"Note: Could not download video directly: {str(error)}"
-                                )
-
-                            yield self.create_json_message(
-                                {
-                                    "task_id": task_id,
-                                    "model": task_data.get("model"),
-                                    "status": status,
-                                    "video_url": video_url,
-                                    "resolution": task_data.get("resolution"),
-                                    "ratio": task_data.get("ratio"),
-                                    "duration": task_data.get("duration"),
-                                    "framespersecond": task_data.get("framespersecond"),
-                                    "seed": task_data.get("seed"),
-                                    "usage": task_data.get("usage"),
-                                    "created_at": task_data.get("created_at"),
-                                    "updated_at": task_data.get("updated_at"),
-                                }
-                            )
-                        else:
-                            yield self.create_text_message("Task succeeded but no video URL found")
-                        return
-
-                    if status == "failed":
-                        error_msg = task_data.get("error", {}).get("message", "Unknown error")
-                        yield self.create_text_message(f"Task failed: {error_msg}")
-                        yield self.create_json_message(task_data)
-                        return
-
-                    if status in ["queued", "running"]:
-                        time.sleep(poll_interval)
-                        continue
-
-                except requests.exceptions.RequestException as error:
-                    yield self.create_text_message(f"Error polling task status: {str(error)}")
-                    time.sleep(poll_interval)
-
-            yield self.create_text_message(
-                f"Task did not complete after {max_polls} polls. Status: {status}"
-            )
-
-        except requests.exceptions.RequestException as error:
-            yield self.create_text_message(f"Error creating video generation task: {str(error)}")
-
-    def _resolve_reference_image_url(self, tool_parameters: dict) -> Generator[ToolInvokeMessage, None, Optional[str]]:
+    def _resolve_image_from_parameters(self, tool_parameters: dict) -> Generator[ToolInvokeMessage, None, Optional[str]]:
         yield self.create_text_message("[DEBUG] Starting image resolution...")
-        for key in ["reference_image_url", "reference_image", "image", "sys.files", "sys_files"]:
+        for key in ["image", "reference_image", "sys.files", "sys_files"]:
             yield self.create_text_message(f"[DEBUG] Checking parameter: '{key}'")
-            resolved = yield from self._resolve_image_like_parameter(tool_parameters.get(key))
+            resolved = yield from self._resolve_image_input(tool_parameters.get(key))
             if resolved:
                 yield self.create_text_message(f"[DEBUG] Found and resolved image from '{key}'")
                 return resolved
 
-        # Backward-compatible fallback for previous array-based parameter.
-        legacy_images = tool_parameters.get("reference_images")
-        if isinstance(legacy_images, list) and legacy_images:
-            for item in legacy_images:
-                resolved = self._resolve_image_like_parameter(item)
-                if resolved_item := (yield from self._resolve_image_like_parameter(item)):
-                    yield self.create_text_message("[DEBUG] Found and resolved image from legacy 'reference_images' array")
-                    return resolved_item
-
-        skip_keys = {
-            "prompt",
-            "generate_audio",
-            "ratio",
-            "duration",
-            "watermark",
-            "poll_interval",
-            "max_polls",
-            "model",
-        }
+        skip_keys = {"prompt", "size", "response_format", "watermark", "model"}
         for key, value in tool_parameters.items():
             if key in skip_keys:
                 continue
-            resolved = yield from self._resolve_image_like_parameter(value)
+            resolved = yield from self._resolve_image_input(value)
             if resolved:
                 yield self.create_text_message(f"[DEBUG] Found and resolved image from fallback parameter '{key}'")
                 return resolved
@@ -189,46 +89,46 @@ class ImageToVideoTool(Tool):
         yield self.create_text_message("[DEBUG] Image resolution finished, no image found.")
         return None
 
-    def _resolve_image_like_parameter(self, value) -> Generator[ToolInvokeMessage, None, Optional[str]]:
-        if not value:
+    def _resolve_image_input(self, image_parameter) -> Generator[ToolInvokeMessage, None, Optional[str]]:
+        if not image_parameter:
             return None
 
-        if isinstance(value, list):
+        if isinstance(image_parameter, list):
             yield self.create_text_message("[DEBUG] Processing list of potential images...")
-            for item in value:
-                if resolved_item := (yield from self._resolve_image_like_parameter(item)):
+            for item in image_parameter:
+                if resolved_item := (yield from self._resolve_image_input(item)):
                     return resolved_item
             return None
 
-        if isinstance(value, str) and value.strip().startswith("{"):
+        if isinstance(image_parameter, str) and image_parameter.strip().startswith("{"):
             try:
                 yield self.create_text_message("[DEBUG] Parsing JSON string to resolve image...")
-                parsed = json.loads(value)
-                return (yield from self._resolve_image_like_parameter(parsed))
+                parsed = json.loads(image_parameter)
+                return (yield from self._resolve_image_input(parsed))
             except Exception:
                 yield self.create_text_message("[DEBUG] Failed to parse string as JSON.")
                 pass
 
-        if isinstance(value, str) and value.strip():
-            normalized = value.strip()
+        if isinstance(image_parameter, str) and image_parameter.strip():
+            normalized = image_parameter.strip()
             if self._looks_like_url_or_data_uri(normalized):
                 yield self.create_text_message("[DEBUG] Using provided string as URL or Data URI.")
                 return normalized
             yield self.create_text_message("[DEBUG] Treating string as a potential file ID.")
             return (yield from self._file_id_to_data_uri(normalized))
 
-        if isinstance(value, dict):
+        if isinstance(image_parameter, dict):
             yield self.create_text_message("[DEBUG] Extracting image from dictionary object...")
-            return (yield from self._extract_image_url(value))
+            return (yield from self._extract_image_input(image_parameter))
 
         yield self.create_text_message("[DEBUG] Treating value as a potential file object...")
-        object_candidate = yield from self._extract_from_file_object(value)
+        object_candidate = yield from self._extract_from_file_object(image_parameter)
         if object_candidate:
             return object_candidate
 
         return None
 
-    def _extract_image_url(self, image_input: dict) -> Generator[ToolInvokeMessage, None, Optional[str]]:
+    def _extract_image_input(self, image_input: dict) -> Generator[ToolInvokeMessage, None, Optional[str]]:
         transfer_method = image_input.get("transfer_method")
 
         if transfer_method == "remote_url":
@@ -247,7 +147,7 @@ class ImageToVideoTool(Tool):
             yield self.create_text_message("[DEBUG] 'local_file' did not yield content, falling back to URL.")
             return self._url_to_data_uri(image_input.get("url") or image_input.get("remote_url"))
 
-        # Support upstream variable mapping where transfer_method is missing.
+        # Support upstream variable mapping where transfer_method might be absent.
         for key in ["url", "remote_url"]:
             url_value = image_input.get(key)
             if isinstance(url_value, str) and self._looks_like_url_or_data_uri(url_value):
@@ -255,9 +155,9 @@ class ImageToVideoTool(Tool):
 
         nested_value = image_input.get("value")
         if isinstance(nested_value, dict):
-            nested_url = yield from self._extract_image_url(nested_value)
-            if nested_url:
-                return nested_url
+            nested_image = yield from self._extract_image_input(nested_value)
+            if nested_image:
+                return nested_image
 
         file_id = self._extract_file_id(image_input) or self._extract_file_id(image_input.get("value", {}))
         if file_id:
@@ -273,6 +173,7 @@ class ImageToVideoTool(Tool):
         if value is None:
             return None
 
+        # Prefer internal file-id lookup to avoid FILES_URL dependency.
         for key in ["id", "related_id", "file_id", "upload_file_id"]:
             file_id = self._safe_getattr(value, key)
             if isinstance(file_id, str) and file_id.strip():
@@ -281,6 +182,7 @@ class ImageToVideoTool(Tool):
                 if data_uri:
                     return data_uri
 
+        # SDK file model may expose a lazy-loaded bytes property `blob`.
         blob = self._safe_getattr(value, "blob")
         if isinstance(blob, bytes) and blob:
             mime_type = self._normalize_image_mime_type(self._safe_getattr(value, "mime_type"))
@@ -326,7 +228,6 @@ class ImageToVideoTool(Tool):
             return None
 
     def _extract_file_id(self, data: dict) -> Optional[str]:
-        # Dify file variables may expose different id fields depending on node/runtime.
         for key in ["id", "related_id", "file_id", "upload_file_id"]:
             value = data.get(key)
             if isinstance(value, str) and value.strip():
@@ -349,9 +250,11 @@ class ImageToVideoTool(Tool):
 
         yield self.create_text_message(f"[DEBUG] Successfully read {len(file_content)} bytes for file ID: {file_id}")
         mime_type = self._normalize_image_mime_type(mime_type)
-        return f"data:{mime_type};base64,{base64.b64encode(file_content).decode('utf-8')}"
+        encoded = base64.b64encode(file_content).decode("utf-8")
+        return f"data:{mime_type};base64,{encoded}"
 
-    def _read_file_content(self, file_id: str) -> tuple[Optional[bytes], Optional[str]]:
+    def _read_file_content(self, file_id: str) -> Generator[ToolInvokeMessage, None, tuple[Optional[bytes], Optional[str]]]:
+        # Preferred path in current SDK runtimes.
         runtime = getattr(self, "runtime", None)
         file_manager = getattr(runtime, "file_manager", None) if runtime else None
         if file_manager:
@@ -364,6 +267,7 @@ class ImageToVideoTool(Tool):
                     return content, mime_type
                 yield self.create_text_message("[DEBUG] runtime.file_manager.get() returned no content.")
 
+        # Fallback for SDK variants exposing get_file_content on tool/runtime.
         for owner in (self, runtime):
             method = getattr(owner, "get_file_content", None) if owner else None
             if callable(method):
@@ -427,12 +331,9 @@ class ImageToVideoTool(Tool):
         if not raw_mime_type:
             return "image/png"
 
-        # Drop parameters and enforce lowercase type/subtype for data URI compatibility.
         mime_type = raw_mime_type.split(";", 1)[0].strip().lower()
         if not mime_type.startswith("image/"):
             return "image/png"
-
         if mime_type == "image/jpg":
             return "image/jpeg"
-
         return mime_type

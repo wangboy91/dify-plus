@@ -37,6 +37,8 @@ python main.py
 # 在插件目录的上一层执行
 dify plugin package ./doubaotoImage
 
+dify signature sign doubaotoImage.difypkg -p my_plugin_key.private.pem
+
 ```
 在 Dify 后台插件管理页上传 并启用。
 

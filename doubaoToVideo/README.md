@@ -38,7 +38,7 @@
 
 **参数**:
 - `prompt` (必需): 视频生成的提示词描述，可以使用 `[图1]` 引用参考图
-- `reference_image` (可选): 单张参考图文件输入
+- `reference_image` (必需): 单张参考图，支持两种输入方式
   - 本地上传图片
   - 直接粘贴图片 URL
 - `generate_audio` (可选): 是否生成音频，默认 `true`
@@ -79,11 +79,6 @@
 - 通过 `GET /contents/generations/tasks/{id}` 轮询任务状态
 - 任务成功后获取视频下载链接并返回
 
-## 工作流变量绑定建议
-
-- `prompt`：直接绑定上游文本变量。
-- `reference_image`：绑定上游文件变量（图片类型）。
-
 ## 注意事项
 
 1. 参考图片要求：
@@ -121,6 +116,6 @@ python main.py
 ```bash
 # 在插件目录的上一层执行
 dify plugin package ./doubaoToVideo
-
+dify signature sign doubaoToVideo.difypkg -p my_plugin_key.private.pem
 ```
 在 Dify 后台插件管理页上传 并启用。

@@ -42,6 +42,7 @@ credentials_for_provider:
       zh_Hans: ep-20260125201054-pfrb4
 tools:
   - tools/text_to_image.yaml
+  - tools/image_to_image.yaml
 extra:
   python:
     source: provider/doubao_ark.py

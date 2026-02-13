@@ -1,0 +1,88 @@
+identity:
+  author: wangboy
+  name: image_to_image
+  label:
+    en_US: Image to Image
+    zh_Hans: 豆包图生图
+  icon: icon.svg
+description:
+  human:
+    en_US: Generate images from a reference image via Doubao Ark.
+    zh_Hans: 通过豆包方舟基于参考图生成图片。
+  llm: Generate images from a reference image using Doubao Ark.
+parameters:
+  - name: prompt
+    type: string
+    required: true
+    form: llm
+    label:
+      en_US: Prompt
+      zh_Hans: 提示词
+    human_description:
+      en_US: Describe how the input image should be transformed.
+      zh_Hans: 描述如何对输入图片进行变换。
+  - name: image
+    type: file
+    required: true
+    form: form
+    label:
+      en_US: Reference Image
+      zh_Hans: 参考图
+    human_description:
+      en_US: Upload one local image or paste one image URL.
+      zh_Hans: 上传一张本地图片或粘贴一张图片URL。
+    transfer_method: local_file, remote_url
+  - name: size
+    type: select
+    required: false
+    form: form
+    default: 4K
+    options:
+      - value: 2K
+        label:
+          en_US: 2K
+          zh_Hans: 2K
+      - value: 4K
+        label:
+          en_US: 4K
+          zh_Hans: 4K
+    label:
+      en_US: Size
+      zh_Hans: 尺寸
+    human_description:
+      en_US: Output image size.
+      zh_Hans: 输出图片尺寸。
+  - name: response_format
+    type: select
+    required: false
+    form: form
+    default: url
+    options:
+      - value: url
+        label:
+          en_US: URL
+          zh_Hans: URL
+      - value: b64_json
+        label:
+          en_US: Base64 JSON
+          zh_Hans: Base64 JSON
+    label:
+      en_US: Response Format
+      zh_Hans: 响应格式
+    human_description:
+      en_US: Response format for generated images.
+      zh_Hans: 生成图片的响应格式。
+  - name: watermark
+    type: boolean
+    required: false
+    form: form
+    default: true
+    label:
+      en_US: Watermark
+      zh_Hans: 水印
+    human_description:
+      en_US: Add watermark to generated images.
+      zh_Hans: 是否添加水印。
+extra:
+  python:
+    source: tools/image_to_image.py

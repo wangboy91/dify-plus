@@ -47,3 +47,20 @@ curl -X POST https://ark.cn-beijing.volces.com/api/v3/images/generations \
         "total_tokens": xxx
     }
 }
+
+
+图生图
+curl https://ark.cn-beijing.volces.com/api/v3/images/generations \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ARK_API_KEY" \
+  -d '{
+    "model": "doubao-seedream-4-5-251128",
+    "prompt": "保持模特姿势和液态服装的流动形状不变。将服装材质从银色金属改为完全透明的清水（或玻璃）。透过液态水流，可以看到模特的皮肤细节。光影从反射变为折射。",
+    "image": "https://ark-project.tos-cn-beijing.volces.com/doc_image/seedream4_5_imageToimage.png",
+    "size": "2K",
+    "watermark": false
+}'
+
+image 支持 url 输入的图片信息，支持 URL 或 Base64 编码。其中，doubao-seedream-4.5/4.0 支持单图或多图输入
+图片URL：请确保图片URL可被访问。
+Base64编码：请遵循此格式data:image/<图片格式>;base64,<Base64编码>。注意 <图片格式> 需小写，如 data:image/png;base64,<base64_image>。
