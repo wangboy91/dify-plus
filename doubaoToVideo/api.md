@@ -107,31 +107,31 @@ Step2: 查询视频生成任务
 
 # Replace cgt-2025**** with the ID acquired from "Create Video Generation Task".
 
-curl https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks/cgt-2025**** \
+curl -X GET https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks/cgt-2025**** \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $ARK_API_KEY" 
+  -H "Authorization: Bearer $ARK_API_KEY"
 
   当任务状态变为 succeeded 后，您可在 content.video_url 字段处，下载最终生成的视频文件
-
-  {
-    "id": "cgt-2025****",
-    "model": "doubao-seedance-1-0-pro-250528",
-    "status": "succeeded", 
-    "content": {
-        // Video download URL (file format is MP4)
-        "video_url": "https://ark-content-generation-cn-beijing.tos-cn-beijing.volces.com/****"
-    },
-    "usage": {
-        "completion_tokens": 246840,
-        "total_tokens": 246840
-    },
-    "created_at": 1765510475,
-    "updated_at": 1765510559,
-    "seed": 58944,
-    "resolution": "1080p",
-    "ratio": "16:9",
-    "duration": 5,
-    "framespersecond": 24,
-    "service_tier": "default",
-    "execution_expires_after": 172800
+{
+  "id": "cgt-2025******-****",
+  "model": "doubao-seedance-1-5-pro-251215",
+  "status": "succeeded",
+  "content": {
+    "video_url": "https://ark-content-generation-cn-beijing.tos-cn-beijing.volces.com/xxx"
+  },
+  "usage": {
+    "completion_tokens": 108900,
+    "total_tokens": 108900
+  },
+  "created_at": 1743414619,
+  "updated_at": 1743414673,
+  "seed": 10,
+  "resolution": "720p",
+  "ratio": "16:9",
+  "duration": 5,
+  "framespersecond": 24,
+  "service_tier":"default",
+  "execution_expires_after":172800,
+  "generate_audio":true,
+  "draft":false
 }

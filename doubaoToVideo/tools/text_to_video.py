@@ -10,7 +10,7 @@ class TextToVideoTool(Tool):
         credentials = self.runtime.credentials or {}
         api_key = credentials.get("ark_api_key")
         base_url = credentials.get("base_url") or "https://ark.cn-beijing.volces.com"
-        model = credentials.get("model") or "doubao-seedance-1-5-pro-251215"
+        model = tool_parameters.get("model") or "doubao-seedance-1-5-pro-251215"
 
         prompt = tool_parameters.get("prompt")
         if not prompt:
@@ -82,8 +82,8 @@ class TextToVideoTool(Tool):
                             try:
                                 video_resp = requests.get(video_url, timeout=30)
                                 if video_resp.status_code == 200:
-                                    yield self.create_file_message(
-                                        file=video_resp.content,
+                                    yield self.create_file(
+                                        data=video_resp.content,
                                         filename="generated_video.mp4",
                                         mime_type="video/mp4"
                                     )

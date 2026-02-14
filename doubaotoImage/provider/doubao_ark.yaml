@@ -30,16 +30,6 @@ credentials_for_provider:
     placeholder:
       en_US: https://ark.cn-beijing.volces.com
       zh_Hans: https://ark.cn-beijing.volces.com
-  model:
-    type: text-input
-    required: true
-    default: ep-20260125201054-pfrb4
-    label:
-      en_US: Model
-      zh_Hans: 接入点
-    placeholder:
-      en_US: ep-20260125201054-pfrb4
-      zh_Hans: ep-20260125201054-pfrb4
 tools:
   - tools/text_to_image.yaml
   - tools/image_to_image.yaml

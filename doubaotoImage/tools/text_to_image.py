@@ -10,7 +10,7 @@ class TextToImageTool(Tool):
         credentials = self.runtime.credentials or {}
         api_key = credentials.get("ark_api_key")
         base_url = credentials.get("base_url") or "https://ark.cn-beijing.volces.com"
-        model = credentials.get("model") or "ep-20260125201054-pfrb4"
+        model = tool_parameters.get("model") or "ep-20260125201054-pfrb4"
 
         prompt = tool_parameters.get("prompt")
         if not prompt:

@@ -11,6 +11,19 @@ description:
     zh_Hans: 通过豆包方舟根据提示词生成视频。
   llm: Generate video from a text prompt using Doubao Ark.
 parameters:
+  - name: model
+    type: string
+    required: true
+    form: form
+    default: doubao-seedance-1-5-pro-251215
+    label:
+      en_US: Model
+      zh_Hans: 模型或接入点
+    placeholder:
+      en_US: doubao-seedance-1-5-pro-251215
+      zh_Hans: doubao-seedance-1-5-pro-251215
+    human_description:
+      en_US: Model or access point.
   - name: prompt
     type: string
     required: true

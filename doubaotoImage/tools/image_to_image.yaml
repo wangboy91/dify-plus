@@ -11,6 +11,19 @@ description:
     zh_Hans: 通过豆包方舟基于参考图生成图片。
   llm: Generate images from a reference image using Doubao Ark.
 parameters:
+  - name: model
+    type: string
+    required: true
+    form: form
+    default: ep-20260125201054-pfrb4
+    label:
+      en_US: Model
+      zh_Hans: 模型或接入点
+    placeholder:
+      en_US: ep-20260125201054-pfrb4
+      zh_Hans: ep-20260125201054-pfrb4
+    human_description:
+      en_US: Model or access point.
   - name: prompt
     type: string
     required: true

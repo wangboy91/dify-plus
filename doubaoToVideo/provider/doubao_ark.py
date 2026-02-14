@@ -2,6 +2,8 @@ from dify_plugin import ToolProvider
 
 
 class DoubaoArkVideoProvider(ToolProvider):
+    identity = "doubao_ark_video"
+
     def validate_credentials(self, credentials: dict) -> None:
         # Required fields are enforced by schema; keep validation lightweight.
         return

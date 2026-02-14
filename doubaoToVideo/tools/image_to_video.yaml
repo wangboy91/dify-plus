@@ -7,10 +7,24 @@ identity:
   icon: icon.svg
 description:
   human:
-    en_US: Generate video from reference images via Doubao Ark.
-    zh_Hans: 通过豆包方舟根据参考图生成视频。
-  llm: Generate video from reference images using Doubao Ark.
+    en_US: Generate video from one or more reference images via Doubao Ark.
+    zh_Hans: 通过豆包方舟根据一张或多张参考图生成视频。
+  llm: Generate video from one or more input images and a text prompt using Doubao Ark.
 parameters:
+  - name: model
+    type: string
+    required: false
+    form: form
+    default: doubao-seedance-1-5-pro-251215
+    label:
+      en_US: Model
+      zh_Hans: 模型或接入点
+    placeholder:
+      en_US: doubao-seedance-1-5-pro-251215
+      zh_Hans: doubao-seedance-1-5-pro-251215
+    human_description:
+      en_US: Model or access point.
+      zh_Hans: 模型或接入点。
   - name: prompt
     type: string
     required: true
@@ -19,19 +33,32 @@ parameters:
       en_US: Prompt
       zh_Hans: 视频提示词
     human_description:
-      en_US: Describe the video you want to generate. You can use [图1] to reference the input image.
-      zh_Hans: 描述你希望生成的视频内容。可以使用[图1]来引用输入图片。
+      en_US: Describe the video you want to generate.
+      zh_Hans: 描述你希望生成的视频内容。
   - name: reference_image
     type: file
     required: true
     form: form
     label:
       en_US: Reference Image
-      zh_Hans: 参考图
+      zh_Hans: 参考图片
     human_description:
-      en_US: Upload one local image or paste one image URL.
-      zh_Hans: 上传一张本地图片或粘贴一张图片URL。
-    transfer_method: local_file, remote_url
+      en_US: Upload a reference image for image-to-video generation.
+      zh_Hans: 上传用于图生视频的参考图片。
+  - name: image_role
+    type: string
+    required: false
+    form: form
+    default: first_frame
+    label:
+      en_US: Image Role
+      zh_Hans: 图片角色
+    placeholder:
+      en_US: first_frame
+      zh_Hans: first_frame
+    human_description:
+      en_US: Role for input image, e.g. first_frame or reference_image. Leave empty to omit.
+      zh_Hans: 输入图片的角色，例如 first_frame 或 reference_image。留空表示不传。
   - name: generate_audio
     type: boolean
     required: false
@@ -61,6 +88,10 @@ parameters:
         label:
           en_US: "9:16"
           zh_Hans: "9:16"
+      - value: "1:1"
+        label:
+          en_US: "1:1"
+          zh_Hans: "1:1"
     label:
       en_US: Aspect Ratio
       zh_Hans: 宽高比
